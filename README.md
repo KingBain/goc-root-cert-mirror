@@ -68,6 +68,39 @@ wget -qO- \
   "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint"
 ```
 
+## Use in a Dockerfile
+
+The mirrored certificate can also be downloaded and installed directly in a Dockerfile.
+
+For Debian or Ubuntu based images:
+
+```dockerfile
+FROM ubuntu:24.04
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && curl -fsSL \
+        "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+        -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
+    && update-ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+```
+
+For Alpine based images:
+
+```dockerfile
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates curl \
+    && curl -fsSL \
+        "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+        -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
+    && update-ca-certificates
+```
+
+This installs the mirrored certificate into the container trust store so tools inside the image can trust certificates chained to the Government of Canada Root CA.
+
+
 ## Use in a Dev Container Feature
 
 This mirror can be used as the certificate source for a Dev Container Feature:
