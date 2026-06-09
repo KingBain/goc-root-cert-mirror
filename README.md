@@ -1,5 +1,5 @@
 # GoC Root CA Certificate Mirror
-[![Update GoC Root CA](https://github.com/KingBain/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml/badge.svg)](https://github.com/KingBain/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml)
+[![Update GoC Root CA](https://github.com/gccloudone-aurora-collab/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml/badge.svg)](https://github.com/gccloudone-aurora-collab/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml)
 
 This repository provides a stable GitHub-hosted copy of the Government of Canada Root CA certificate.
 
@@ -12,7 +12,7 @@ The upstream certificate is published by the Government of Canada PKI service, b
 ## Repository
 
 ```text
-https://github.com/KingBain/goc-root-cert-mirror
+https://github.com/gccloudone-aurora-collab/goc-root-cert-mirror
 ```
 
 ## Certificate
@@ -34,14 +34,14 @@ certs/GoC-GdC-Root-A.sha256-fingerprint
 Use the GitHub raw file URL to download the certificate directly:
 
 ```text
-https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt
+https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt
 ```
 
 Download with `curl`:
 
 ```sh
 curl -fsSL \
-  "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+  "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
   -o GoC-GdC-Root-A.crt
 ```
 
@@ -49,28 +49,28 @@ Download with `wget`:
 
 ```sh
 wget \
-  "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+  "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
   -O GoC-GdC-Root-A.crt
 ```
 
 ## Download the fingerprint
 
 ```text
-https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint
+https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint
 ```
 
 Download with `curl`:
 
 ```sh
 curl -fsSL \
-  "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint"
+  "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint"
 ```
 
 Download with `wget`:
 
 ```sh
 wget -qO- \
-  "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint"
+  "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.sha256-fingerprint"
 ```
 
 ## Use in a Dockerfile
@@ -85,7 +85,7 @@ FROM ubuntu:24.04
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl \
     && curl -fsSL \
-        "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+        "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
         -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -98,7 +98,7 @@ FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates curl \
     && curl -fsSL \
-        "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
+        "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
         -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
     && update-ca-certificates
 ```
@@ -112,8 +112,8 @@ This mirror can be used as the certificate source for a Dev Container Feature:
 
 ```jsonc
 "features": {
-  "ghcr.io/KingBain/devcontainer-features/enhanced-custom-root-ca:2": {
-    "sources": "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt"
+  "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:2": {
+    "sources": "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt"
   }
 }
 ```
@@ -122,8 +122,8 @@ With fingerprint verification:
 
 ```jsonc
 "features": {
-  "ghcr.io/KingBain/devcontainer-features/enhanced-custom-root-ca:2": {
-    "sources": "https://raw.githubusercontent.com/KingBain/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt",
+  "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:2": {
+    "sources": "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt",
     "fingerprints": "PASTE_SHA256_FINGERPRINT_HERE"
   }
 }
