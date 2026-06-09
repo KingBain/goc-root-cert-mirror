@@ -82,11 +82,14 @@ For Debian or Ubuntu based images:
 ```dockerfile
 FROM ubuntu:24.04
 
+ARG GOC_ROOT_A_FINGERPRINT="FE:E0:9E:77:43:BF:D4:3E:D7:D4:D3:ED:50:6C:C7:9D:2D:90:70:FF:A9:29:91:16:87:D4:27:33:70:BE:A3:06"
+
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl \
+    && apt-get install -y --no-install-recommends ca-certificates curl openssl \
     && curl -fsSL \
         "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
         -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
+    && test "$(openssl x509 -in /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt -noout -sha256 -fingerprint | cut -d= -f2)" = "${GOC_ROOT_A_FINGERPRINT}" \
     && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 ```
@@ -96,10 +99,13 @@ For Alpine based images:
 ```dockerfile
 FROM alpine:latest
 
-RUN apk add --no-cache ca-certificates curl \
+ARG GOC_ROOT_A_FINGERPRINT="FE:E0:9E:77:43:BF:D4:3E:D7:D4:D3:ED:50:6C:C7:9D:2D:90:70:FF:A9:29:91:16:87:D4:27:33:70:BE:A3:06"
+
+RUN apk add --no-cache ca-certificates curl openssl \
     && curl -fsSL \
         "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt" \
         -o /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt \
+    && test "$(openssl x509 -in /usr/local/share/ca-certificates/GoC-GdC-Root-A.crt -noout -sha256 -fingerprint | cut -d= -f2)" = "${GOC_ROOT_A_FINGERPRINT}" \
     && update-ca-certificates
 ```
 
@@ -112,7 +118,7 @@ This mirror can be used as the certificate source for a Dev Container Feature:
 
 ```jsonc
 "features": {
-  "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:2": {
+  "ghcr.io/KingBain/devcontainer-features/enhanced-custom-root-ca:3": {
     "sources": "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt"
   }
 }
@@ -122,7 +128,7 @@ With fingerprint verification:
 
 ```jsonc
 "features": {
-  "ghcr.io/gccloudone-aurora-collab/devcontainer-features/enhanced-custom-root-ca:2": {
+  "ghcr.io/KingBain/devcontainer-features/enhanced-custom-root-ca:3": {
     "sources": "https://raw.githubusercontent.com/gccloudone-aurora-collab/goc-root-cert-mirror/main/certs/GoC-GdC-Root-A.crt",
     "fingerprints": "PASTE_SHA256_FINGERPRINT_HERE"
   }
