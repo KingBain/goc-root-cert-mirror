@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 12 * * *"
 
+concurrency:
+  group: update-goc-root-ca
+  cancel-in-progress: true
+
 jobs:
   check-and-download:
     name: Check for Updates
