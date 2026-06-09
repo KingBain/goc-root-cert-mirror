@@ -5,6 +5,10 @@ This repository provides a stable GitHub-hosted copy of the Government of Canada
 
 The upstream certificate is published by the Government of Canada PKI service, but that endpoint can be unreliable from some CI/CD environments. This repository mirrors the certificate so automated tests, dev containers, and build pipelines can download a stable copy from GitHub instead.
 
+## GC Service Page
+
+<https://gcxgce.sharepoint.com/teams/10003392/SitePages/Device-Certificates.aspx>
+
 ## Repository
 
 ```text
