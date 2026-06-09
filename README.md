@@ -1,5 +1,5 @@
 # GoC Root CA Certificate Mirror
-
+[![Update GoC Root CA](https://github.com/KingBain/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml/badge.svg)](https://github.com/KingBain/goc-root-cert-mirror/actions/workflows/update-goc-root-ca.yml)
 This repository provides a stable GitHub-hosted copy of the Government of Canada Root CA certificate.
 
 The upstream certificate is published by the Government of Canada PKI service, but that endpoint can be unreliable from some CI/CD environments. This repository mirrors the certificate so automated tests, dev containers, and build pipelines can download a stable copy from GitHub instead.
