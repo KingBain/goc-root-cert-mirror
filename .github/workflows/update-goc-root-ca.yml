@@ -10,14 +10,14 @@ jobs:
     name: Check for Updates
     runs-on: ubuntu-latest
     permissions:
-      contents: read # Read-only for the network and processing stage
+      contents: read 
     outputs:
       has_changes: ${{ steps.compare.outputs.has_changes }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 #v6.0.3
         with:
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Download and compare certificate
         id: compare
@@ -36,34 +36,57 @@ jobs:
 
           if ! curl -4 -sfL --user-agent "$user_agent" --connect-timeout 15 --max-time 60 \
             --retry 3 --retry-delay 3 --retry-all-errors "$source_url" -o "$temp_cert"; then
-            echo "Upstream unreachable. Keeping existing copy."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Upstream unreachable. Skipping."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           fingerprint_cert() {
-            openssl x509 -in "$1" -noout -sha256 -fingerprint 2>/dev/null | cut -d'=' -f2 || \
-            openssl x509 -inform DER -in "$1" -noout -sha256 -fingerprint | cut -d'=' -f2
+            local f="$1"
+            local fp=""
+            # Try DER then PEM
+            if fp=$(openssl x509 -inform DER -in "$f" -noout -sha256 -fingerprint 2>/dev/null); then
+              echo "$fp" | cut -d'=' -f2
+            elif fp=$(openssl x509 -in "$f" -noout -sha256 -fingerprint 2>/dev/null); then
+              echo "$fp" | cut -d'=' -f2
+            fi
           }
 
-          downloaded_fp="$(fingerprint_cert "$temp_cert" || true)"
-          if [ -z "$downloaded_fp" ]; then
-            echo "Invalid certificate format."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+          live_fp="$(fingerprint_cert "$temp_cert" | tr -d '[:space:]' || true)"
+          
+          if [ -z "$live_fp" ]; then
+            echo "Downloaded file is not a valid certificate."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
-          current_fp=""
-          [ -f "$cert_path" ] && current_fp="$(fingerprint_cert "$cert_path" || true)"
+          needs_update="false"
 
-          if [ "$downloaded_fp" = "$current_fp" ]; then
-            echo "No changes detected."
-            echo "has_changes=false" >> $GITHUB_OUTPUT
+          if [ ! -f "$cert_path" ] || ! cmp -s "$temp_cert" "$cert_path"; then
+            echo "Certificate file is missing or different."
+            needs_update="true"
+          fi
+
+          if [ ! -f "$fingerprint_path" ]; then
+            echo "Fingerprint file is missing."
+            needs_update="true"
           else
-            echo "Update detected."
+            stored_fp="$(cat "$fingerprint_path" | tr -d '[:space:]')"
+            if [ "$live_fp" != "$stored_fp" ]; then
+              echo "Fingerprint file mismatch (Stored: $stored_fp vs Live: $live_fp)."
+              needs_update="true"
+            fi
+          fi
+
+
+          if [ "$needs_update" = "true" ]; then
+            echo "Update required."
             cp "$temp_cert" "$cert_path"
-            printf '%s\n' "$downloaded_fp" > "$fingerprint_path"
-            echo "has_changes=true" >> $GITHUB_OUTPUT
+            printf '%s\n' "$live_fp" > "$fingerprint_path"
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Repository files are correct and up-to-date."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Upload temporary files
@@ -102,8 +125,8 @@ jobs:
           git add certs/GoC-GdC-Root-A.crt certs/GoC-GdC-Root-A.sha256-fingerprint
           
           if git diff --cached --quiet; then
-            echo "No actual changes to commit."
+            echo "No changes to commit (files were identical)."
           else
-            git commit -m "chore: update GoC root CA certificate"
+            git commit -m "chore: update/fix GoC root CA certificate and fingerprint"
             git push
           fi
