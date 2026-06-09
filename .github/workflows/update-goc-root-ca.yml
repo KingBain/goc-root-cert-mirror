@@ -1,0 +1,112 @@
+---
+name: Update GoC Root CA
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update-goc-root-ca:
+    name: Update GoC Root CA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and compare certificate
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          source_url="http://pki-icp.canada.ca/aia/GoC-GdC-Root-A.crt"
+          cert_path="certs/GoC-GdC-Root-A.crt"
+          fingerprint_path="certs/GoC-GdC-Root-A.sha256-fingerprint"
+          user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+          mkdir -p certs
+
+          temp_cert="$(mktemp)"
+          trap 'rm -f "$temp_cert"' EXIT
+
+          echo "Checking upstream certificate: ${source_url}"
+
+          if ! curl \
+            -4 \
+            -sfL \
+            --user-agent "$user_agent" \
+            --connect-timeout 15 \
+            --max-time 60 \
+            --retry 3 \
+            --retry-delay 3 \
+            --retry-all-errors \
+            "$source_url" \
+            -o "$temp_cert"; then
+            echo "Upstream certificate was not reachable. Keeping existing repository copy."
+            exit 0
+          fi
+
+          if [ ! -s "$temp_cert" ]; then
+            echo "Downloaded certificate is empty. Keeping existing repository copy."
+            exit 0
+          fi
+
+          fingerprint_cert() {
+            local cert_file="$1"
+
+            openssl x509 \
+              -in "$cert_file" \
+              -noout \
+              -sha256 \
+              -fingerprint 2>/dev/null \
+              | cut -d'=' -f2 \
+              || openssl x509 \
+                -inform DER \
+                -in "$cert_file" \
+                -noout \
+                -sha256 \
+                -fingerprint \
+                | cut -d'=' -f2
+          }
+
+          downloaded_fingerprint="$(fingerprint_cert "$temp_cert" || true)"
+
+          if [ -z "$downloaded_fingerprint" ]; then
+            echo "Downloaded file could not be parsed as a certificate. Keeping existing repository copy."
+            exit 0
+          fi
+
+          echo "Downloaded fingerprint: ${downloaded_fingerprint}"
+
+          if [ -f "$cert_path" ]; then
+            current_fingerprint="$(fingerprint_cert "$cert_path" || true)"
+            echo "Current fingerprint: ${current_fingerprint}"
+          else
+            current_fingerprint=""
+            echo "No existing certificate found in repository."
+          fi
+
+          if [ "$downloaded_fingerprint" = "$current_fingerprint" ]; then
+            echo "Certificate has not changed. Nothing to update."
+            exit 0
+          fi
+
+          cp "$temp_cert" "$cert_path"
+          printf '%s\n' "$downloaded_fingerprint" > "$fingerprint_path"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add "$cert_path" "$fingerprint_path"
+
+          if [ -z "$(git status --porcelain -- "$cert_path" "$fingerprint_path")" ]; then
+            echo "No repository changes detected."
+            exit 0
+          fi
+
+          git commit -m "chore: update GoC root CA certificate"
+          git push
